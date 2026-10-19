@@ -1,0 +1,1 @@
+{"name":"skybridge-server","private":true,"type":"module","scripts":{"dev":"node --watch index.js","start":"node index.js","setup":"node setup.js"},"dependencies":{"dotenv":"^17.4.2","express":"^5.1.0","express-rate-limit":"^8.2.1","helmet":"^8.1.0","multer":"^2.0.2","oracledb":"^6.10.0","qrcode":"^1.5.4","sharp":"^0.34.4","zod":"^4.1.12"}}

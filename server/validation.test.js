@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {flightInput,registration,canConfirm} from './validation.js';
+import {hashPassword,verifyPassword,tokenHash} from './security.js';
+const tomorrow=new Date(Date.now()+86400000), later=new Date(Date.now()+90000000);
+const flight={airline_id:1,flight_no:'PR 123',origin:'MNL',destination:'CEB',departure_at:tomorrow.toISOString(),arrival_at:later.toISOString(),fare:1200,capacity:1,status:'SCHEDULED'};
+test('Valid flight and PH account accepted',()=>{assert.equal(flightInput.parse(flight).capacity,1);assert.equal(registration.parse({name:'Test User',email:'TEST@example.com',password:'GoodPassword123',phone:'+639171234567'}).email,'test@example.com');});
+test('Reject invalid itinerary and prices',()=>{for(const change of [{destination:'MNL'},{fare:0},{fare:-2},{capacity:0},{capacity:1.5},{arrival_at:tomorrow.toISOString()},{departure_at:'2020-01-01T00:00:00Z'},{origin:'BAD'}])assert.equal(flightInput.safeParse({...flight,...change}).success,false);});
+test('Confirm only reviewable future bookings with seats',()=>{assert.equal(canConfirm('PENDING_REVIEW',1,tomorrow),true);assert.equal(canConfirm('CONFIRMED',1,tomorrow),false);assert.equal(canConfirm('PENDING_REVIEW',0,tomorrow),false);assert.equal(canConfirm('PENDING_REVIEW',1,'2020-01-01'),false);});
+test('Reject weak passwords and malformed phone numbers',()=>{const v={name:'Test User',email:'test@example.com',password:'GoodPassword123',phone:'+639171234567'};assert.equal(registration.safeParse({...v,password:'short'}).success,false);assert.equal(registration.safeParse({...v,phone:'12345'}).success,false);});
+test('Passwords are salted and checked, session tokens are hashed',async()=>{const a=await hashPassword('GoodPassword123'),b=await hashPassword('GoodPassword123');assert.notEqual(a,b);assert.equal(await verifyPassword('GoodPassword123',a),true);assert.equal(await verifyPassword('WrongPassword123',a),false);assert.equal(tokenHash('abc').length,64);});
